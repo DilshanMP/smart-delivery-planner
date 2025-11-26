@@ -1,0 +1,333 @@
+# Smart Delivery Planner - Git Ignore File
+# Laravel 11 + Vue/React + Development Tools
+
+# ============================================
+# Laravel Specific
+# ============================================
+
+# Environment files (CRITICAL - Never commit!)
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+
+# Laravel specific directories
+/vendor/
+/node_modules/
+/public/hot
+/public/storage
+/storage/*.key
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Keep directory structure but ignore content
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/testing/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
+
+# Compiled files
+/public/css/
+/public/js/
+/public/mix-manifest.json
+/public/build/
+
+# ============================================
+# Composer
+# ============================================
+composer.phar
+composer.lock
+/vendor/
+
+# ============================================
+# NPM / Yarn
+# ============================================
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock
+package-lock.json
+.pnpm-store/
+
+# ============================================
+# Development Tools
+# ============================================
+
+# PHPUnit
+.phpunit.result.cache
+phpunit.xml
+
+# PHP CS Fixer
+.php_cs.cache
+.php-cs-fixer.cache
+
+# Laravel IDE Helper
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# VS Code
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PhpStorm / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# NetBeans
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+
+# ============================================
+# Operating Systems
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Logs and Databases
+# ============================================
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# Keep example database
+!database/.gitkeep
+!database/factories/.gitkeep
+!database/migrations/.gitkeep
+!database/seeders/.gitkeep
+
+# ============================================
+# Backup and Temporary Files
+# ============================================
+*.bak
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# ============================================
+# Uploads and User Generated Content
+# ============================================
+/public/uploads/
+/storage/app/public/*
+!/storage/app/public/.gitkeep
+
+# Receipt files (from cost tracking)
+/storage/app/receipts/
+/public/receipts/
+
+# Proof of delivery files
+/storage/app/pod/
+/public/pod/
+
+# ============================================
+# Documentation (Keep tracked)
+# ============================================
+# All .md files should be tracked
+# All documentation in /docs should be tracked
+
+# ============================================
+# AI/ML Models (Large files)
+# ============================================
+*.pkl
+*.h5
+*.hdf5
+*.onnx
+*.pb
+*.pth
+*.pt
+/ml-models/*.pkl
+/storage/ml-models/
+
+# Python virtual environments (if using Flask)
+venv/
+env/
+.env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# ============================================
+# Build and Distribution
+# ============================================
+/build/
+/dist/
+*.tar.gz
+*.zip
+*.rar
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# ============================================
+# Security and Secrets (CRITICAL)
+# ============================================
+
+# SSH Keys
+*.pem
+*.key
+*.pub
+id_rsa
+id_rsa.pub
+
+# API Keys and Tokens
+.secrets
+secrets.json
+credentials.json
+service-account.json
+
+# Google Maps API credentials
+google-maps-credentials.json
+
+# Database credentials
+db-credentials.json
+
+# ============================================
+# Testing
+# ============================================
+/coverage/
+.nyc_output/
+phpunit-report.html
+
+# ============================================
+# Package Managers
+# ============================================
+.yarn/
+.pnp.*
+
+# ============================================
+# Frontend Build Tools
+# ============================================
+
+# Vite
+vite.config.js.timestamp-*
+.vite/
+
+# Webpack
+webpack.mix.js.tmp
+
+# ============================================
+# Project Specific
+# ============================================
+
+# Academic submission files (temporary)
+/submission/*.zip
+/submission/*.pdf
+
+# Client presentations (large files)
+/presentations/*.pptx
+/presentations/*.pdf
+
+# Demo videos
+*.mp4
+*.avi
+*.mov
+
+# Export files (generated reports)
+/exports/*.csv
+/exports/*.pdf
+/exports/*.xlsx
+
+# ============================================
+# Cache and Optimization
+# ============================================
+.cache/
+*.cache
+
+# Route cache
+bootstrap/cache/routes-v7.php
+bootstrap/cache/config.php
+bootstrap/cache/services.php
+bootstrap/cache/packages.php
+
+# ============================================
+# Documentation Build Output (if using generators)
+# ============================================
+/docs/_build/
+/docs/.doctrees/
+
+# ============================================
+# IMPORTANT: Files to KEEP tracked
+# ============================================
+
+# Keep these files in version control:
+# - README.md
+# - CHANGELOG.md
+# - LICENSE
+# - .gitignore (this file)
+# - .env.example
+# - composer.json
+# - package.json
+# - All documentation in /docs
+# - All migrations in /database/migrations
+# - All seeders in /database/seeders
+# - All routes in /routes
+# - All controllers, models, views
+# - Public assets (.css, .js in /resources)
+
+# ============================================
+# Notes
+# ============================================
+
+# This .gitignore is configured for:
+# - Laravel 11
+# - Smart Delivery Planner project
+# - MySQL database
+# - Bootstrap 5 frontend
+# - Python Flask ML microservice
+# - Academic + Production use
+
+# Always verify before committing:
+# git status
+# git diff --cached
+
+# To see ignored files:
+# git status --ignored
+
+# ============================================
