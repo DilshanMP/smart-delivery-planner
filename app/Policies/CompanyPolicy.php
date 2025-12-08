@@ -4,63 +4,48 @@ namespace App\Policies;
 
 use App\Models\Company;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CompanyPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Determine if the user can view any companies
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('view companies');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine if the user can view the company
      */
     public function view(User $user, Company $company): bool
     {
-        return false;
+        return $user->can('view companies');
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine if the user can create companies
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->can('create companies');
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine if the user can update the company
      */
     public function update(User $user, Company $company): bool
     {
-        return false;
+        return $user->can('edit companies');
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine if the user can delete the company
      */
     public function delete(User $user, Company $company): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Company $company): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Company $company): bool
-    {
-        return false;
+        return $user->can('delete companies');
     }
 }
+
+

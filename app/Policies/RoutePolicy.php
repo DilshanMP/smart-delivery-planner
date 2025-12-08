@@ -4,63 +4,46 @@ namespace App\Policies;
 
 use App\Models\Route;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class RoutePolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Determine if the user can view any routes
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('view routes');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine if the user can view the route
      */
     public function view(User $user, Route $route): bool
     {
-        return false;
+        return $user->can('view routes');
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine if the user can create routes
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->can('create routes');
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine if the user can update the route
      */
     public function update(User $user, Route $route): bool
     {
-        return false;
+        return $user->can('edit routes');
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine if the user can delete the route
      */
     public function delete(User $user, Route $route): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Route $route): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Route $route): bool
-    {
-        return false;
+        return $user->can('delete routes');
     }
 }

@@ -4,63 +4,46 @@ namespace App\Policies;
 
 use App\Models\Driver;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class DriverPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Determine if the user can view any drivers
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('view drivers');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine if the user can view the driver
      */
     public function view(User $user, Driver $driver): bool
     {
-        return false;
+        return $user->can('view drivers');
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine if the user can create drivers
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->can('create drivers');
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine if the user can update the driver
      */
     public function update(User $user, Driver $driver): bool
     {
-        return false;
+        return $user->can('edit drivers');
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine if the user can delete the driver
      */
     public function delete(User $user, Driver $driver): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Driver $driver): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Driver $driver): bool
-    {
-        return false;
+        return $user->can('delete drivers');
     }
 }

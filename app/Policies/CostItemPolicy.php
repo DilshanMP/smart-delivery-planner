@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\CostItem;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CostItemPolicy
 {
@@ -13,7 +12,8 @@ class CostItemPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        // All authenticated users can view cost items
+        return true;
     }
 
     /**
@@ -21,7 +21,13 @@ class CostItemPolicy
      */
     public function view(User $user, CostItem $costItem): bool
     {
-        return false;
+        // Admin and managers can view any cost item
+        if ($user->hasAnyRole(['admin', 'manager'])) {
+            return true;
+        }
+
+        // Others can only view cost items from their company's routes
+        return $user->company_id === $costItem->route->company_id;
     }
 
     /**
@@ -29,7 +35,8 @@ class CostItemPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        // Admin, managers, and coordinators can create cost items
+        return $user->hasAnyRole(['admin', 'manager', 'coordinator']);
     }
 
     /**
@@ -37,6 +44,16 @@ class CostItemPolicy
      */
     public function update(User $user, CostItem $costItem): bool
     {
+        // Admin and managers can update any cost item
+        if ($user->hasAnyRole(['admin', 'manager'])) {
+            return true;
+        }
+
+        // Coordinators can update cost items from their company's routes
+        if ($user->hasRole('coordinator')) {
+            return $user->company_id === $costItem->route->company_id;
+        }
+
         return false;
     }
 
@@ -45,7 +62,8 @@ class CostItemPolicy
      */
     public function delete(User $user, CostItem $costItem): bool
     {
-        return false;
+        // Admin and managers can delete cost items
+        return $user->hasAnyRole(['admin', 'manager']);
     }
 
     /**
@@ -53,7 +71,8 @@ class CostItemPolicy
      */
     public function restore(User $user, CostItem $costItem): bool
     {
-        return false;
+        // Admin and managers can restore cost items
+        return $user->hasAnyRole(['admin', 'manager']);
     }
 
     /**
@@ -61,6 +80,7 @@ class CostItemPolicy
      */
     public function forceDelete(User $user, CostItem $costItem): bool
     {
-        return false;
+        // Only admins can force delete cost items
+        return $user->hasRole('admin');
     }
 }

@@ -2,65 +2,48 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Warehouse;
-use Illuminate\Auth\Access\Response;
+use App\Models\User;
 
 class WarehousePolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Determine if the user can view any warehouses
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('view warehouses');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine if the user can view the warehouse
      */
     public function view(User $user, Warehouse $warehouse): bool
     {
-        return false;
+        return $user->can('view warehouses');
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine if the user can create warehouses
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->can('create warehouses');
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine if the user can update the warehouse
      */
     public function update(User $user, Warehouse $warehouse): bool
     {
-        return false;
+        return $user->can('edit warehouses');
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine if the user can delete the warehouse
      */
     public function delete(User $user, Warehouse $warehouse): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Warehouse $warehouse): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Warehouse $warehouse): bool
-    {
-        return false;
+        return $user->can('delete warehouses');
     }
 }

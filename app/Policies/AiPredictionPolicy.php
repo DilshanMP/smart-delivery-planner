@@ -13,7 +13,8 @@ class AiPredictionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        // All authenticated users can view AI predictions
+        return true;
     }
 
     /**
@@ -21,7 +22,13 @@ class AiPredictionPolicy
      */
     public function view(User $user, AiPrediction $aiPrediction): bool
     {
-        return false;
+        // Admin and managers can view any prediction
+        if ($user->hasAnyRole(['admin', 'manager'])) {
+            return true;
+        }
+
+        // Others can only view predictions from their company's routes
+        return $user->company_id === $aiPrediction->route->company_id;
     }
 
     /**
@@ -29,7 +36,8 @@ class AiPredictionPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        // Admin, managers, and coordinators can create AI predictions
+        return $user->hasAnyRole(['admin', 'manager', 'coordinator']);
     }
 
     /**
@@ -37,7 +45,8 @@ class AiPredictionPolicy
      */
     public function update(User $user, AiPrediction $aiPrediction): bool
     {
-        return false;
+        // Only admins can update AI predictions (for retraining purposes)
+        return $user->hasRole('admin');
     }
 
     /**
@@ -45,7 +54,8 @@ class AiPredictionPolicy
      */
     public function delete(User $user, AiPrediction $aiPrediction): bool
     {
-        return false;
+        // Only admins can delete AI predictions
+        return $user->hasRole('admin');
     }
 
     /**
@@ -53,7 +63,8 @@ class AiPredictionPolicy
      */
     public function restore(User $user, AiPrediction $aiPrediction): bool
     {
-        return false;
+        // Only admins can restore AI predictions
+        return $user->hasRole('admin');
     }
 
     /**
@@ -61,6 +72,7 @@ class AiPredictionPolicy
      */
     public function forceDelete(User $user, AiPrediction $aiPrediction): bool
     {
-        return false;
+        // Only admins can force delete AI predictions
+        return $user->hasRole('admin');
     }
 }
