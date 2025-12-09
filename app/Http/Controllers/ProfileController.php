@@ -10,40 +10,53 @@ use Illuminate\Validation\Rules\Password;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Show the profile edit form
      */
-    public function edit(Request $request)
+    public function edit()
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = Auth::user();
+        return view('profile.edit', compact('user'));
     }
 
     /**
-     * Update the user's profile information.
+     * Update the user's profile information
      */
     public function update(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
         ]);
 
-        $user->fill($validated);
+        $user->update($validated);
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
-
-        $user->save();
-
-        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully!');
+        return redirect()->route('profile.edit')
+                        ->with('success', 'Profile updated successfully!');
     }
 
     /**
-     * Delete the user's account.
+     * Update the user's password
+     */
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user = Auth::user();
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return redirect()->route('profile.edit')
+                        ->with('success', 'Password updated successfully!');
+    }
+
+    /**
+     * Delete the user's account
      */
     public function destroy(Request $request)
     {
@@ -51,7 +64,7 @@ class ProfileController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
+        $user = Auth::user();
 
         Auth::logout();
 
@@ -61,22 +74,5 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
-    }
-
-    /**
-     * Update the user's password.
-     */
-    public function updatePassword(Request $request)
-    {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
-        ]);
-
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        return redirect()->route('profile.edit')->with('success', 'Password updated successfully!');
     }
 }
