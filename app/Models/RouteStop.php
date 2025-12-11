@@ -4,101 +4,98 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
+// Related models - ensure these classes exist
+use App\Models\Route;
+use App\Models\Company;
 
 class RouteStop extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'route_stops_new';
+
     protected $fillable = [
         'route_id',
-        'sequence',
-        'customer_name',
-        'delivery_address',
+        'stop_sequence',
+        'shop_name',
+        'shop_address',
         'latitude',
         'longitude',
-        'sale_value',
-        'special_instructions',
+        'stop_type', // warehouse, shop, final
+        'sales_value',
+        'sales_qty',
+        'sales_company_id', // Which company's sale (Step 3)
+        'is_delivered',
         'delivered_at',
         'delivery_notes',
+        'special_instructions',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'sequence' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
-        'sale_value' => 'decimal:2',
+        'sales_value' => 'decimal:2',
+        'sales_qty' => 'integer',
+        'is_delivered' => 'boolean',
         'delivered_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-
     ];
 
     /**
-     * Get the route that owns the stop.
+     * RELATIONSHIPS
      */
-    public function route(): BelongsTo
+
+    public function route()
     {
-        return $this->belongsTo(Route::class);
+        return $this->belongsTo(Route::class, 'route_id');
     }
 
-
-    /**
-     * Get the full address with GPS coordinates.
-     */
-    public function getFullLocationAttribute(): string
+    public function salesCompany()
     {
-        $location = $this->delivery_address;
-        if ($this->latitude && $this->longitude) {
-            $location .= " (GPS: {$this->latitude}, {$this->longitude})";
-        }
-        return $location;
+        return $this->belongsTo(Company::class, 'sales_company_id');
     }
 
     /**
-     * Check if stop has GPS coordinates.
+     * METHODS
      */
-    public function hasGpsCoordinates(): bool
-    {
-        return !is_null($this->latitude) && !is_null($this->longitude);
-    }
 
-    /**
-     * Check if stop has been delivered.
-     */
-    public function isDelivered(): bool
-    {
-        return !is_null($this->delivered_at);
-    }
-
-    /**
-     * Mark stop as delivered.
-     */
-    public function markAsDelivered(?string $notes = null): void
+    public function markAsDelivered($notes = null)
     {
         $this->update([
+            'is_delivered' => true,
             'delivered_at' => now(),
             'delivery_notes' => $notes,
         ]);
     }
 
     /**
-     * Get the display name for this stop.
+     * ACCESSORS
      */
-    public function getDisplayNameAttribute(): string
+
+    public function getFullAddressAttribute()
     {
-        return "Stop {$this->sequence}: {$this->customer_name}";
+        $address = $this->shop_address;
+
+        if (!is_null($this->latitude) && !is_null($this->longitude)) {
+            $address .= " (GPS: {$this->latitude}, {$this->longitude})";
+        }
+
+        return $address;
+    }
+
+    public function getStopTypeLabelAttribute()
+    {
+        // Use switch for maximum compatibility
+        switch ($this->stop_type) {
+            case 'warehouse':
+                return 'Warehouse (Start)';
+            case 'shop':
+                return 'Shop Visit';
+            case 'final':
+                return 'Final Stop';
+            default:
+                return 'Stop';
+        }
     }
 }

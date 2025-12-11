@@ -4,21 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RouteLeg extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'route_legs_new';
+
     protected $fillable = [
         'route_id',
         'leg_number',
+        'from_stop_id',
+        'to_stop_id',
         'from_location',
         'to_location',
         'from_latitude',
@@ -27,18 +25,12 @@ class RouteLeg extends Model
         'to_longitude',
         'distance_km',
         'duration_minutes',
-        'calculation_method',
+        'calculation_method', // google_maps, haversine, manual
         'calculated_at',
-        'notes',
+        'google_maps_route_json',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'leg_number' => 'integer',
         'from_latitude' => 'decimal:8',
         'from_longitude' => 'decimal:8',
         'to_latitude' => 'decimal:8',
@@ -46,65 +38,42 @@ class RouteLeg extends Model
         'distance_km' => 'decimal:2',
         'duration_minutes' => 'integer',
         'calculated_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-
     ];
 
     /**
-     * Get the route that owns the leg.
+     * RELATIONSHIPS
      */
-    public function route(): BelongsTo
+
+    public function route()
     {
-        return $this->belongsTo(Route::class);
+        return $this->belongsTo(Route::class, 'route_id');
     }
+
     public function fromStop()
-{
-    return $this->belongsTo(RouteStop::class, 'from_stop_id');
-}
-
-public function toStop()
-{
-    return $this->belongsTo(RouteStop::class, 'to_stop_id');
-}
-
-    /**
-     * Check if leg was calculated using Google Maps API.
-     */
-    public function isCalculatedByGoogleMaps(): bool
     {
-        return $this->calculation_method === 'google_maps_api';
+        return $this->belongsTo(RouteStop::class, 'from_stop_id');
+    }
+
+    public function toStop()
+    {
+        return $this->belongsTo(RouteStop::class, 'to_stop_id');
     }
 
     /**
-     * Check if leg was manually entered.
+     * ACCESSORS
      */
-    public function isManualEntry(): bool
-    {
-        return $this->calculation_method === 'manual';
-    }
 
-    /**
-     * Get the display name for this leg.
-     */
-    public function getDisplayNameAttribute(): string
+    public function getDisplayNameAttribute()
     {
         return "Leg {$this->leg_number}: {$this->from_location} → {$this->to_location}";
     }
 
-    /**
-     * Get formatted distance with unit.
-     */
-    public function getFormattedDistanceAttribute(): string
+    public function getFormattedDistanceAttribute()
     {
         return number_format($this->distance_km, 2) . ' km';
     }
 
-    /**
-     * Get formatted duration in hours and minutes.
-     */
-    public function getFormattedDurationAttribute(): string
+    public function getFormattedDurationAttribute()
     {
         $hours = floor($this->duration_minutes / 60);
         $minutes = $this->duration_minutes % 60;
@@ -113,5 +82,10 @@ public function toStop()
             return "{$hours}h {$minutes}m";
         }
         return "{$minutes}m";
+    }
+
+    public function isCalculatedByGoogleMaps()
+    {
+        return $this->calculation_method === 'google_maps';
     }
 }

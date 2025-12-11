@@ -17,8 +17,41 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    background-image: url('/public/build/assets/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+}
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6));
+    z-index: -1;
+}
+.bg-white {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+/* resources/css/app.css */
+/* .login-bg {
+  background-image: url('/public/build/assets/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+ */
+
+
+/* Optional: dim/blur the page behind the card */
+.auth-card-bg {
+  background-color: rgba(255,255,255,0.92); /* slightly transparent white */
+  backdrop-filter: blur(4px);
 }
 
 /* Navbar customization */

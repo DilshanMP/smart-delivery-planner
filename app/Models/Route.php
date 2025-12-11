@@ -4,36 +4,70 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
+// Related models (make sure these files/classes exist)
+use App\Models\Company;
+use App\Models\Warehouse;
+use App\Models\Driver;
+use App\Models\Vehicle;
+use App\Models\RouteStop;
+use App\Models\RouteLeg;
+use App\Models\RouteCostItem;
+use App\Models\RouteCompanyAllocation;
 
 class Route extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'routes_new'; // Using new table structure
+
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
+        // Planning (Step 1)
+        'route_date',
         'company_id',
         'warehouse_id',
-        'vehicle_id',
         'driver_id',
+        'vehicle_id',
         'route_code',
-        'delivery_date',
+        'start_time',
+        'end_time',
         'delivery_type',
-        'status',
-        'total_distance_km',
-        'total_duration_minutes',
-        'estimated_cost',
-        'actual_cost',
+
+        // Estimated Calculations (Step 2)
+        'estimated_distance_km',
+        'estimated_fuel_rate_per_km',
+        'estimated_fuel_rate_per_litre',
+        'estimated_fuel_cost',
+        'estimated_meal_cost',
+        'estimated_accommodation_cost',
+        'estimated_days',
+        'estimated_total_cost',
+
+        // Actual Completion (Step 4)
+        'actual_start_km',
+        'actual_end_km',
+        'actual_distance_km',
+        'actual_fuel_cost',
+        'actual_meal_cost',
+        'actual_accommodation_cost',
+        'actual_other_costs',
+        'actual_total_cost',
+
+        // Variance Tracking (Step 6)
+        'km_variance',
         'cost_variance',
         'cost_variance_percentage',
-          'estimated_distance_km',   // << add
-            'actual_distance_km',
+
+        // Returns & Closure (Step 5)
+        'return_sales_value',
+        'is_completed',
+        'status',
+
+        // Tracking
         'started_at',
         'completed_at',
         'notes',
@@ -41,167 +75,254 @@ class Route extends Model
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
-    'delivery_date' => 'date',
-    'estimated_distance_km' => 'decimal:2',
-    'actual_distance_km' => 'decimal:2',
-    'total_distance_km' => 'decimal:2',
-    'total_duration_minutes' => 'integer',
-    'estimated_cost' => 'decimal:2',
-    'actual_cost' => 'decimal:2',
-    'cost_variance' => 'decimal:2',
-    'cost_variance_percentage' => 'decimal:2',
-    'started_at' => 'datetime',
-    'completed_at' => 'datetime',
-    'created_at' => 'datetime',
-    'updated_at' => 'datetime',
-    'deleted_at' => 'datetime',
+        'route_date' => 'date',
+        // stored as TIME in DB — casting to string is safe
+        'start_time' => 'string',
+        'end_time' => 'string',
 
+        'estimated_distance_km' => 'decimal:2',
+        'estimated_fuel_rate_per_km' => 'decimal:2',
+        'estimated_fuel_rate_per_litre' => 'decimal:2',
+        'estimated_fuel_cost' => 'decimal:2',
+        'estimated_meal_cost' => 'decimal:2',
+        'estimated_accommodation_cost' => 'decimal:2',
+        'estimated_total_cost' => 'decimal:2',
+
+        'actual_start_km' => 'decimal:2',
+        'actual_end_km' => 'decimal:2',
+        'actual_distance_km' => 'decimal:2',
+        'actual_fuel_cost' => 'decimal:2',
+        'actual_meal_cost' => 'decimal:2',
+        'actual_accommodation_cost' => 'decimal:2',
+        'actual_other_costs' => 'decimal:2',
+        'actual_total_cost' => 'decimal:2',
+
+        'km_variance' => 'decimal:2',
+        'cost_variance' => 'decimal:2',
+        'cost_variance_percentage' => 'decimal:2',
+
+        'return_sales_value' => 'decimal:2',
+        'is_completed' => 'boolean',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     /**
-     * Get the company that owns the route.
+     * RELATIONSHIPS
      */
-  public function company()
-{
-    return $this->belongsTo(Company::class);
-}
 
-public function driver()
-{
-    return $this->belongsTo(Driver::class);
-}
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 
-public function vehicle()
-{
-    return $this->belongsTo(Vehicle::class);
-}
-
-public function stops()
-{
-    return $this->hasMany(RouteStop::class)->orderBy('sequence');
-}
-    public function warehouse(): BelongsTo
+    public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);
     }
 
-
-
-public function legs()
-{
-    return $this->hasMany(RouteLeg::class);
-}
-
-    /**
-     * Get the cost items for this route.
-     */
-    public function costItems(): HasMany
+    public function driver()
     {
-        return $this->hasMany(CostItem::class);
+        return $this->belongsTo(Driver::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    // Note: migration uses 'stop_sequence' so keep that column name
+    public function stops()
+    {
+        return $this->hasMany(RouteStop::class, 'route_id')->orderBy('stop_sequence');
+    }
+
+    public function legs()
+    {
+        return $this->hasMany(RouteLeg::class, 'route_id')->orderBy('leg_number');
+    }
+
+    public function costItems()
+    {
+        return $this->hasMany(CostItem::class, 'route_id');
+    }
+
+    public function companyAllocations()
+    {
+        return $this->hasMany(RouteCompanyAllocation::class, 'route_id');
     }
 
     /**
-     * Get the AI predictions for this route.
+     * SCOPES
      */
-    public function aiPredictions(): HasMany
-    {
-        return $this->hasMany(AiPrediction::class);
-    }
 
-    /**
-     * Scope a query to only include active routes.
-     */
     public function scopeActive($query)
     {
         return $query->whereIn('status', ['planned', 'in_progress']);
     }
 
-    /**
-     * Scope a query to only include completed routes.
-     */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
     }
 
-    /**
-     * Scope a query to filter by company.
-     */
     public function scopeByCompany($query, $companyId)
     {
         return $query->where('company_id', $companyId);
     }
 
-    /**
-     * Scope a query to filter by delivery type.
-     */
-    public function scopeByDeliveryType($query, $type)
+    public function scopeByDateRange($query, $startDate, $endDate)
     {
-        return $query->where('delivery_type', $type);
+        return $query->whereBetween('route_date', [$startDate, $endDate]);
     }
 
     /**
-     * Scope a query to filter by date range.
+     * CALCULATION METHODS - Step 2: Estimated Calculations
      */
-    public function scopeBetweenDates($query, $startDate, $endDate)
+    public function calculateEstimatedCosts()
     {
-        return $query->whereBetween('delivery_date', [$startDate, $endDate]);
+        // defensive check: vehicle may be null
+        $fuelEfficiency = optional($this->vehicle)->fuel_efficiency ?? 10; // km per litre
+
+        // Fuel cost based on distance
+        if ($this->estimated_distance_km) {
+            $litresNeeded = $this->estimated_distance_km / max(1, $fuelEfficiency);
+            $this->estimated_fuel_cost = $litresNeeded * ($this->estimated_fuel_rate_per_litre ?? 350);
+        }
+
+        // Meal cost per day
+        if (!$this->estimated_meal_cost && $this->estimated_days) {
+            $this->estimated_meal_cost = 1500 * $this->estimated_days; // LKR 1500/day default
+        }
+
+        // Accommodation cost per night (if multi-day)
+        if (($this->estimated_days ?? 0) > 1 && !$this->estimated_accommodation_cost) {
+            $this->estimated_accommodation_cost = 3000 * (max(0, $this->estimated_days - 1)); // LKR 3000/night
+        }
+
+        // Total estimated cost
+        $this->estimated_total_cost =
+            ($this->estimated_fuel_cost ?? 0) +
+            ($this->estimated_meal_cost ?? 0) +
+            ($this->estimated_accommodation_cost ?? 0);
+
+        $this->save();
+
+        return $this->estimated_total_cost;
     }
 
     /**
-     * Calculate and update total distance from all legs.
+     * ACTUAL COMPLETION - Step 4
      */
-    public function calculateTotalDistance(): float
+    public function recordActualCompletion(array $data)
     {
-        $totalDistance = $this->legs()->sum('distance_km');
-        $this->update(['total_distance_km' => $totalDistance]);
-        return $totalDistance;
+        $this->actual_start_km = $data['actual_start_km'] ?? $this->actual_start_km;
+        $this->actual_end_km = $data['actual_end_km'] ?? $this->actual_end_km;
+        $this->actual_distance_km = null;
+        if (is_numeric($this->actual_end_km) && is_numeric($this->actual_start_km)) {
+            $this->actual_distance_km = $this->actual_end_km - $this->actual_start_km;
+        }
+
+        // If actual costs not provided, default to estimated
+        $this->actual_fuel_cost = $data['actual_fuel_cost'] ?? $this->estimated_fuel_cost ?? 0;
+        $this->actual_meal_cost = $data['actual_meal_cost'] ?? $this->estimated_meal_cost ?? 0;
+        $this->actual_accommodation_cost = $data['actual_accommodation_cost'] ?? $this->estimated_accommodation_cost ?? 0;
+        $this->actual_other_costs = $data['actual_other_costs'] ?? 0;
+
+        $this->actual_total_cost =
+            ($this->actual_fuel_cost ?? 0) +
+            ($this->actual_meal_cost ?? 0) +
+            ($this->actual_accommodation_cost ?? 0) +
+            ($this->actual_other_costs ?? 0);
+
+        $this->save();
+        $this->calculateVariances();
     }
 
     /**
-     * Calculate and update total duration from all legs.
+     * VARIANCE CALCULATION - Step 6
      */
-    public function calculateTotalDuration(): int
+    public function calculateVariances()
     {
-        $totalDuration = $this->legs()->sum('duration_minutes');
-        $this->update(['total_duration_minutes' => $totalDuration]);
-        return $totalDuration;
+        // KM Variance
+        if (is_numeric($this->actual_distance_km) && is_numeric($this->estimated_distance_km)) {
+            $this->km_variance = $this->actual_distance_km - $this->estimated_distance_km;
+        } else {
+            $this->km_variance = null;
+        }
+
+        // Cost Variance
+        if (is_numeric($this->actual_total_cost) && is_numeric($this->estimated_total_cost)) {
+            $this->cost_variance = $this->actual_total_cost - $this->estimated_total_cost;
+
+            if ($this->estimated_total_cost > 0) {
+                $this->cost_variance_percentage = ($this->cost_variance / $this->estimated_total_cost) * 100;
+            } else {
+                $this->cost_variance_percentage = null;
+            }
+        } else {
+            $this->cost_variance = null;
+            $this->cost_variance_percentage = null;
+        }
+
+        $this->save();
     }
 
     /**
-     * Calculate and update actual cost from all cost items.
+     * COMPANY ALLOCATIONS - Step 3: Multi-Company Sales
      */
-    public function calculateTotalActualCost(): float
+    public function calculateCompanyAllocations()
     {
-        $totalActualCost = $this->costItems()->sum('actual_cost');
-        $this->update(['actual_cost' => $totalActualCost]);
-        return $totalActualCost;
+        // Get all stops grouped by company
+        $companyStops = $this->stops()
+            ->selectRaw('sales_company_id,
+                         SUM(sales_value) as total_sales,
+                         SUM(sales_qty) as total_qty,
+                         COUNT(*) as stop_count')
+            ->whereNotNull('sales_company_id')
+            ->groupBy('sales_company_id')
+            ->get();
+
+        $totalSales = $companyStops->sum('total_sales');
+        $totalCost = $this->estimated_total_cost ?? 0;
+
+        foreach ($companyStops as $companyData) {
+            // Calculate allocation percentage based on sales value
+            $allocationPercentage = $totalSales > 0
+                ? ($companyData->total_sales / $totalSales) * 100
+                : 0;
+
+            $allocatedCost = ($allocationPercentage / 100) * $totalCost;
+            $profit = $companyData->total_sales - $allocatedCost;
+            $profitMargin = $companyData->total_sales > 0
+                ? ($profit / $companyData->total_sales) * 100
+                : 0;
+
+            RouteCompanyAllocation::updateOrCreate(
+                [
+                    'route_id' => $this->id,
+                    'company_id' => $companyData->sales_company_id
+                ],
+                [
+                    'total_sales_value' => $companyData->total_sales,
+                    'total_sales_qty' => $companyData->total_qty,
+                    'number_of_stops' => $companyData->stop_count,
+                    'allocated_cost' => $allocatedCost,
+                    'allocation_percentage' => $allocationPercentage,
+                    'profit' => $profit,
+                    'profit_margin_percentage' => $profitMargin,
+                ]
+            );
+        }
     }
 
     /**
-     * Calculate and update cost variance.
+     * ROUTE STATUS MANAGEMENT
      */
-    public function calculateCostVariance(): void
-    {
-        $variance = $this->actual_cost - $this->estimated_cost;
-        $variancePercentage = $this->estimated_cost > 0
-            ? ($variance / $this->estimated_cost) * 100
-            : 0;
 
-        $this->update([
-            'cost_variance' => $variance,
-            'cost_variance_percentage' => $variancePercentage,
-        ]);
-    }
-
-    /**
-     * Mark route as started.
-     */
-    public function markAsStarted(): void
+    public function markAsStarted()
     {
         $this->update([
             'status' => 'in_progress',
@@ -209,56 +330,80 @@ public function legs()
         ]);
     }
 
-    /**
-     * Mark route as completed.
-     */
-    public function markAsCompleted(): void
+    public function markAsCompleted($returnSalesValue = 0)
     {
-        $this->calculateTotalActualCost();
-        $this->calculateCostVariance();
-
         $this->update([
             'status' => 'completed',
+            'is_completed' => true,
             'completed_at' => now(),
+            'return_sales_value' => $returnSalesValue,
         ]);
+
+        $this->calculateVariances();
+        $this->calculateCompanyAllocations();
     }
 
     /**
-     * Get the total sale value from all stops.
+     * POWER BI / REPORTING HELPERS - Step 6
      */
-    public function getTotalSaleValueAttribute(): float
+
+    public function getTotalSalesValue()
     {
-        return $this->stops()->sum('sale_value') ?? 0;
+        return $this->stops()->sum('sales_value');
     }
 
-    /**
-     * Get the number of stops.
-     */
-    public function getStopCountAttribute(): int
+    public function getTotalSalesQty()
     {
-        return $this->stops()->count();
+        return $this->stops()->sum('sales_qty');
     }
 
-    /**
-     * Get the latest AI prediction for this route.
-     */
-    public function latestPrediction(): ?AiPrediction
+    public function getNetSalesValue()
     {
-        return $this->aiPredictions()->latest()->first();
+        return $this->getTotalSalesValue() - ($this->return_sales_value ?? 0);
     }
 
-    /**
-     * Check if route is overbudget.
-     */
-    public function isOverbudget(): bool
+    public function getRouteProfitability()
     {
-        return $this->actual_cost > $this->estimated_cost;
+        $netSales = $this->getNetSalesValue();
+        $actualCost = $this->actual_total_cost ?? $this->estimated_total_cost ?? 0;
+
+        return [
+            'total_sales' => $this->getTotalSalesValue(),
+            'return_sales' => $this->return_sales_value,
+            'net_sales' => $netSales,
+            'total_cost' => $actualCost,
+            'profit' => $netSales - $actualCost,
+            'profit_margin' => $netSales > 0 ? (($netSales - $actualCost) / $netSales) * 100 : 0,
+        ];
     }
 
     /**
-     * Get formatted route status.
+     * ACCESSORS / ATTRIBUTES
      */
-    public function getStatusLabelAttribute(): string
+
+    public function getEstimatedVsActualAttribute()
+    {
+        return [
+            'distance' => [
+                'estimated' => $this->estimated_distance_km,
+                'actual' => $this->actual_distance_km,
+                'variance' => $this->km_variance,
+            ],
+            'cost' => [
+                'estimated' => $this->estimated_total_cost,
+                'actual' => $this->actual_total_cost,
+                'variance' => $this->cost_variance,
+                'variance_percentage' => $this->cost_variance_percentage,
+            ],
+        ];
+    }
+
+    public function getIsOverbudgetAttribute()
+    {
+        return ($this->cost_variance ?? 0) > 0;
+    }
+
+    public function getStatusLabelAttribute()
     {
         return match($this->status) {
             'planned' => 'Planned',
@@ -268,17 +413,4 @@ public function legs()
             default => 'Unknown',
         };
     }
-
-    /**
-     * Get formatted delivery type.
-     */
-    public function getDeliveryTypeLabelAttribute(): string
-    {
-        return match($this->delivery_type) {
-            'own' => 'Own Company',
-            'outside' => 'External Client',
-            default => 'Unknown',
-        };
-    }
-
 }

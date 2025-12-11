@@ -4,101 +4,66 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CostItem extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'route_id',
-        'item_type',
+        'cost_type', // fuel, meal, accommodation, toll, parking, maintenance, other
         'description',
-        'estimated_cost',
-        'actual_cost',
-        'variance',
+        'estimated_amount',
+        'actual_amount',
         'receipt_number',
-        'incurred_at',
-        'notes',
+        'receipt_file_path', // For uploading bills (Step 4 optional)
+        'expense_date',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'estimated_cost' => 'decimal:2',
-        'actual_cost' => 'decimal:2',
-        'variance' => 'decimal:2',
-        'incurred_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'estimated_amount' => 'decimal:2',
+        'actual_amount' => 'decimal:2',
+        'expense_date' => 'date',
     ];
 
     /**
-     * Get the route that owns the cost item.
+     * RELATIONSHIPS
      */
-    public function route(): BelongsTo
+
+    public function route()
     {
         return $this->belongsTo(Route::class);
     }
 
     /**
-     * Calculate and update variance.
+     * ACCESSORS
      */
-    public function calculateVariance(): void
-    {
-        $variance = $this->actual_cost - $this->estimated_cost;
-        $this->update(['variance' => $variance]);
-    }
 
-    /**
-     * Scope a query to filter by item type.
-     */
-    public function scopeOfType($query, $type)
+    public function getCostTypeLabelAttribute()
     {
-        return $query->where('item_type', $type);
-    }
-
-    /**
-     * Check if cost item is over budget.
-     */
-    public function isOverbudget(): bool
-    {
-        return $this->actual_cost > $this->estimated_cost;
-    }
-
-    /**
-     * Get formatted item type label.
-     */
-    public function getItemTypeLabelAttribute(): string
-    {
-        return match($this->item_type) {
+        return match($this->cost_type) {
             'fuel' => 'Fuel',
-            'meals' => 'Meals',
-            'tolls' => 'Tolls',
-            'lodging' => 'Lodging',
+            'meal' => 'Meal / Refreshment',
+            'accommodation' => 'Accommodation',
+            'toll' => 'Toll Charges',
+            'parking' => 'Parking',
+            'maintenance' => 'Maintenance',
             'other' => 'Other',
             default => 'Unknown',
         };
     }
 
-    /**
-     * Get variance percentage.
-     */
-    public function getVariancePercentageAttribute(): float
+    public function getVarianceAttribute()
     {
-        if ($this->estimated_cost == 0) {
-            return 0;
+        if ($this->actual_amount && $this->estimated_amount) {
+            return $this->actual_amount - $this->estimated_amount;
         }
-        return ($this->variance / $this->estimated_cost) * 100;
+        return null;
+    }
+
+    public function hasReceipt()
+    {
+        return !empty($this->receipt_file_path);
     }
 }

@@ -8,7 +8,7 @@ use App\Models\User;
 class RoutePolicy
 {
     /**
-     * Determine if the user can view any routes
+     * Determine if the user can view any routes.
      */
     public function viewAny(User $user): bool
     {
@@ -16,7 +16,7 @@ class RoutePolicy
     }
 
     /**
-     * Determine if the user can view the route
+     * Determine if the user can view the route.
      */
     public function view(User $user, Route $route): bool
     {
@@ -24,7 +24,7 @@ class RoutePolicy
     }
 
     /**
-     * Determine if the user can create routes
+     * Determine if the user can create routes.
      */
     public function create(User $user): bool
     {
@@ -32,7 +32,7 @@ class RoutePolicy
     }
 
     /**
-     * Determine if the user can update the route
+     * Determine if the user can update the route.
      */
     public function update(User $user, Route $route): bool
     {
@@ -40,7 +40,7 @@ class RoutePolicy
     }
 
     /**
-     * Determine if the user can delete the route
+     * Determine if the user can delete the route.
      */
     public function delete(User $user, Route $route): bool
     {
