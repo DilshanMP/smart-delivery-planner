@@ -1,0 +1,21 @@
+{
+  "features": [
+    "total_distance_km",
+    "total_stops",
+    "num_companies",
+    "total_sales_value",
+    "month",
+    "vehicle_type_encoded",
+    "day_of_week_encoded",
+    "is_weekend",
+    "driver_experience_years",
+    "vehicle_age_years",
+    "vehicle_fuel_efficiency",
+    "base_fuel_price",
+    "distance_fuel_cost",
+    "driver_salary_cost",
+    "vehicle_maintenance_cost",
+    "toll_charges"
+  ],
+  "n_features": 16
+}

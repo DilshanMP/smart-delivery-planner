@@ -49,4 +49,10 @@ return [
         'api_key' => env('GOOGLE_MAPS_API_KEY', ''),
     ],
 
+    'ai' => [
+    'url' => env('AI_API_URL', 'http://localhost:5000'),
+    'timeout' => env('AI_API_TIMEOUT', 30),
+],
+
+
 ];

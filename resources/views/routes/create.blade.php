@@ -38,7 +38,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Route Date <span class="text-danger">*</span></label>
-                                <input type="date" name="route_date" class="form-control @error('route_date') is-invalid @enderror"
+                                <input type="date" name="route_date" id="route_date" class="form-control @error('route_date') is-invalid @enderror"
                                        value="{{ old('route_date', date('Y-m-d')) }}" required>
                                 @error('route_date')
                                     <span class="invalid-feedback">{{ $message }}</span>
@@ -86,10 +86,12 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Driver <span class="text-danger">*</span></label>
-                                <select name="driver_id" class="form-control select2 @error('driver_id') is-invalid @enderror" required>
+                                <select name="driver_id" id="driver_id" class="form-control select2 @error('driver_id') is-invalid @enderror" required>
                                     <option value="">Select Driver</option>
                                     @foreach($drivers as $driver)
-                                        <option value="{{ $driver->id }}" {{ old('driver_id') == $driver->id ? 'selected' : '' }}>
+                                        <option value="{{ $driver->id }}"
+                                                data-experience="{{ $driver->experience_years ?? 5 }}"
+                                                {{ old('driver_id') == $driver->id ? 'selected' : '' }}>
                                             {{ $driver->name }} - {{ $driver->license_number }}
                                         </option>
                                     @endforeach
@@ -107,6 +109,8 @@
                                     @foreach($vehicles as $vehicle)
                                         <option value="{{ $vehicle->id }}"
                                                 data-efficiency="{{ $vehicle->fuel_efficiency }}"
+                                                data-type="{{ $vehicle->vehicle_type }}"
+                                                data-age="{{ $vehicle->vehicle_age ?? 3 }}"
                                                 {{ old('vehicle_id') == $vehicle->id ? 'selected' : '' }}>
                                             {{ $vehicle->registration_number }} ({{ $vehicle->vehicle_type }})
                                         </option>
@@ -145,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- COMPANY-WISE SALES ENTRY (NEW!) -->
+            <!-- COMPANY-WISE SALES ENTRY -->
             <div class="card card-success">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-chart-line"></i> Company-wise Sales (Total for Route)</h3>
@@ -153,7 +157,7 @@
                 <div class="card-body">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> <strong>Enter total sales for each company on this route.</strong>
-                        <br>These will be used to calculate cost allocation and profitability.
+                        <br>These will be used for AI cost prediction and profitability analysis.
                     </div>
 
                     <div id="companySalesContainer">
@@ -209,13 +213,13 @@
                 </div>
             </div>
 
-            <!-- Google Maps Route Builder with SEARCH -->
+            <!-- Google Maps Route Builder -->
             <div class="card card-warning">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-map-marked-alt"></i> Route Planning</h3>
                 </div>
                 <div class="card-body">
-                    <!-- ADDRESS SEARCH BOX (NEW!) -->
+                    <!-- ADDRESS SEARCH BOX -->
                     <div class="form-group">
                         <label><i class="fas fa-search"></i> Search Address</label>
                         <input id="searchBox" type="text" class="form-control form-control-lg"
@@ -239,7 +243,7 @@
                 </div>
             </div>
 
-            <!-- Stops List (NO SALES FIELDS HERE!) -->
+            <!-- Stops List -->
             <div class="card card-info">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-map-pin"></i> Route Stops (<span id="stopCount">0</span>)</h3>
@@ -273,13 +277,67 @@
 
         </div>
 
-        <!-- Right Column: Cost Estimation -->
+        <!-- Right Column: Cost Estimation with AI -->
         <div class="col-md-4">
 
-            <!-- Estimated Costs Card -->
+            <!-- AI COST PREDICTION CARD (NEW!) -->
+            <div class="card card-danger">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-robot"></i> AI Cost Prediction</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Get AI-powered cost prediction with 95%+ accuracy
+                    </div>
+
+                    <button type="button" class="btn btn-danger btn-block btn-lg" id="aiPredictBtn" onclick="getAIPrediction()">
+                        <i class="fas fa-brain"></i> Predict Cost with AI
+                    </button>
+
+                    <!-- AI Prediction Result (Hidden initially) -->
+                    <div id="aiPredictionResult" style="display:none;" class="mt-3">
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle"></i> AI Prediction</h5>
+                            <h3 class="mb-2">LKR <span id="aiPredictedCost">0</span></h3>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small>Cost %:</small><br>
+                                    <strong><span id="aiCostPercentage">0</span>%</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small>Confidence:</small><br>
+                                    <strong><span id="aiConfidence">0</span>%</strong>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="text-center">
+                                <button type="button" class="btn btn-sm btn-success" onclick="useAIPrediction()">
+                                    <i class="fas fa-check"></i> Use This Prediction
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Confidence Interval -->
+                        <div class="card bg-light">
+                            <div class="card-body p-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-chart-line"></i> Confidence Range:<br>
+                                    LKR <span id="aiLowerBound">0</span> - <span id="aiUpperBound">0</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs for AI prediction -->
+                    <input type="hidden" name="ai_predicted_cost" id="ai_predicted_cost">
+                    <input type="hidden" name="ai_confidence" id="ai_confidence_hidden">
+                </div>
+            </div>
+
+            <!-- Manual Cost Estimation Card -->
             <div class="card card-primary">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-calculator"></i> Cost Estimation</h3>
+                    <h3 class="card-title"><i class="fas fa-calculator"></i> Manual Cost Estimation</h3>
                 </div>
                 <div class="card-body">
                     <div class="form-group">
@@ -326,12 +384,11 @@
                     <hr>
 
                     <div class="form-group">
-                        <label><strong>TOTAL ESTIMATED COST</strong></label>
+                        <label><strong>TOTAL MANUAL COST</strong></label>
                         <h3 class="text-primary">LKR <span id="total_cost">0</span></h3>
                     </div>
 
-                    <!-- COST PERCENTAGE (NEW!) -->
-                    <div class="alert alert-success">
+                    <div class="alert alert-warning">
                         <h5><i class="fas fa-percentage"></i> Cost Ratio</h5>
                         <h3 class="mb-0"><span id="cost_percentage">0</span>%</h3>
                         <small>Cost as % of Total Sales</small>
@@ -383,6 +440,7 @@ let directionsRenderer;
 let geocoder;
 let searchBox;
 let companySalesIndex = 1;
+let aiPredictionData = null;
 
 $(document).ready(function() {
     $('.select2').select2();
@@ -415,16 +473,14 @@ function initMap() {
     });
     geocoder = new google.maps.Geocoder();
 
-    // GOOGLE MAPS SEARCH BOX (NEW!)
+    // GOOGLE MAPS SEARCH BOX
     const input = document.getElementById('searchBox');
     searchBox = new google.maps.places.SearchBox(input);
 
-    // Bias search to map viewport
     map.addListener('bounds_changed', function() {
         searchBox.setBounds(map.getBounds());
     });
 
-    // Listen for search
     searchBox.addListener('places_changed', function() {
         const places = searchBox.getPlaces();
 
@@ -432,7 +488,6 @@ function initMap() {
             return;
         }
 
-        // Get first result
         const place = places[0];
 
         if (!place.geometry) {
@@ -440,18 +495,12 @@ function initMap() {
             return;
         }
 
-        // Add as stop
         addStop(place.geometry.location, place.formatted_address, place.name);
-
-        // Center map
         map.setCenter(place.geometry.location);
         map.setZoom(15);
-
-        // Clear search box
         input.value = '';
     });
 
-    // Click on map to add stop
     map.addListener('click', function(event) {
         addStop(event.latLng);
     });
@@ -461,7 +510,6 @@ function addStop(location, address = null, name = null) {
     const stopNumber = stops.length + 1;
 
     if (address && name) {
-        // From search - address already available
         const stop = {
             sequence: stopNumber,
             lat: location.lat(),
@@ -476,7 +524,6 @@ function addStop(location, address = null, name = null) {
         updateStopsList();
         recalculateRoute();
     } else {
-        // From map click - need to geocode
         geocoder.geocode({ location: location }, function(results, status) {
             if (status === 'OK' && results[0]) {
                 const address = results[0].formatted_address;
@@ -548,7 +595,6 @@ function updateStopsList() {
     }
 
     stops.forEach((stop, index) => {
-        // Display row
         const row = `
             <tr>
                 <td>
@@ -576,7 +622,6 @@ function updateStopsList() {
         `;
         tbody.append(row);
 
-        // Hidden inputs for form submission
         hiddenContainer.append(`
             <input type="hidden" name="stops[${index}][shop_name]" value="${stop.shop_name}">
             <input type="hidden" name="stops[${index}][shop_address]" value="${stop.address}">
@@ -670,7 +715,6 @@ function calculateCosts() {
     const totalCost = fuelCost + mealCost + accommodationCost;
     $('#total_cost').text(totalCost.toFixed(0));
 
-    // Calculate cost percentage
     calculateCostPercentage();
 }
 
@@ -680,8 +724,6 @@ function calculateTotalSales() {
         total += parseFloat($(this).val()) || 0;
     });
     $('#totalSalesValue').text(total.toFixed(0));
-
-    // Recalculate cost percentage
     calculateCostPercentage();
 }
 
@@ -743,6 +785,264 @@ function addCompanySales() {
 function removeCompanySales(index) {
     $(`.company-sales-row[data-index="${index}"]`).remove();
     calculateTotalSales();
+}
+
+// ============================================================================
+// AI COST PREDICTION FUNCTION (NEW!)
+// ============================================================================
+
+async function getAIPrediction() {
+    // Validation
+    const distance = parseFloat($('#estimated_distance_km').val()) || 0;
+    const totalStops = stops.length;
+    const totalSales = parseFloat($('#totalSalesValue').text()) || 0;
+    const vehicleSelect = $('#vehicle_id option:selected');
+    const rawVehicleType = vehicleSelect.data('type');
+    const vehicleType = mapVehicleTypeForAI(rawVehicleType);
+    const routeDate = $('#route_date').val();
+
+    if (distance === 0) {
+        alert('Please plan route on map first!');
+        return;
+    }
+
+    if (totalSales === 0) {
+        alert('Please enter sales data first!');
+        return;
+    }
+
+    if (!vehicleType) {
+        alert('Please select a vehicle!');
+        return;
+    }
+
+    // Get day of week
+    const date = new Date(routeDate);
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = days[date.getDay()];
+
+    // Count unique companies
+    const numCompanies = $('.company-sales-row').length;
+
+    // Prepare AI request data
+    const requestData = {
+        total_distance_km: distance,
+        total_stops: totalStops,
+        num_companies: numCompanies,
+        total_sales_value: totalSales,
+        vehicle_type: vehicleType,
+        day_of_week: dayOfWeek
+    };
+
+    // Show loading
+    const btn = $('#aiPredictBtn');
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Predicting...');
+
+    try {
+        // Call AI API
+        const response = await fetch('/ai/predict-cost', {
+            method: 'POST',
+            headers: {
+                 'Content-Type': 'application/json',
+                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+             body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Store prediction data
+            aiPredictionData = result.prediction;
+
+            // Calculate cost percentage
+            const costPercentage = (result.prediction.cost / totalSales) * 100;
+            const STANDARD_COST_PERCENTAGE = 0.60; // Standard threshold
+
+            // Display main results
+            $('#aiPredictedCost').text(result.prediction.cost.toLocaleString());
+            $('#aiCostPercentage').text(costPercentage.toFixed(2));
+            $('#aiConfidence').text(result.prediction.model_confidence.toFixed(1));
+            $('#aiLowerBound').text(result.prediction.confidence_interval.lower.toLocaleString());
+            $('#aiUpperBound').text(result.prediction.confidence_interval.upper.toLocaleString());
+
+            // Calculate range cost percentages
+            const lowerCostPct = (result.prediction.confidence_interval.lower / totalSales) * 100;
+            const upperCostPct = (result.prediction.confidence_interval.upper / totalSales) * 100;
+
+            // Determine delivery recommendation
+            let recommendation = '';
+            let recommendationClass = '';
+            let suggestions = [];
+
+            if (costPercentage <= STANDARD_COST_PERCENTAGE) {
+                // GOOD - Below standard
+                recommendation = '✅ GOOD TO DELIVER';
+                recommendationClass = 'alert-success';
+                suggestions.push(`Cost percentage (${costPercentage.toFixed(2)}%) is below standard (${STANDARD_COST_PERCENTAGE}%)`);
+                suggestions.push('Profit margin is healthy');
+                suggestions.push('Route is economically viable');
+            } else if (costPercentage <= STANDARD_COST_PERCENTAGE * 1.5) {
+                // WARNING - Slightly above
+                recommendation = '⚠️ WARNING - MODERATE COST';
+                recommendationClass = 'alert-warning';
+                suggestions.push(`Cost percentage (${costPercentage.toFixed(2)}%) is above standard (${STANDARD_COST_PERCENTAGE}%)`);
+
+                // Calculate required sales for 0.60%
+                const requiredSales = result.prediction.cost / (STANDARD_COST_PERCENTAGE / 100);
+                const additionalSales = requiredSales - totalSales;
+                suggestions.push(`Need additional Rs. ${additionalSales.toLocaleString()} in sales to reach standard`);
+                suggestions.push(`OR reduce route cost by Rs. ${(result.prediction.cost - (totalSales * STANDARD_COST_PERCENTAGE / 100)).toLocaleString()}`);
+            } else {
+                // DANGER - Way above
+                recommendation = '🚫 HIGH RISK - NOT RECOMMENDED';
+                recommendationClass = 'alert-danger';
+                suggestions.push(`Cost percentage (${costPercentage.toFixed(2)}%) is significantly above standard (${STANDARD_COST_PERCENTAGE}%)`);
+
+                // Calculate required sales
+                const requiredSales = result.prediction.cost / (STANDARD_COST_PERCENTAGE / 100);
+                suggestions.push(`Need Rs. ${requiredSales.toLocaleString()} in sales (currently: Rs. ${totalSales.toLocaleString()})`);
+                suggestions.push(`Consider splitting route into multiple deliveries`);
+                suggestions.push(`Or use more fuel-efficient vehicle`);
+                suggestions.push(`Or optimize route to reduce distance`);
+            }
+
+            // Build recommendation HTML
+            let recommendationHTML = `
+                <div class="alert ${recommendationClass} mt-3">
+                    <h5><strong>${recommendation}</strong></h5>
+                    <hr>
+                    <h6>Analysis:</h6>
+                    <ul class="mb-0">
+                        ${suggestions.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="card bg-light mt-2">
+                    <div class="card-body p-2">
+                        <small><strong>Cost Range:</strong></small><br>
+                        <small>
+                            Best case: Rs. ${result.prediction.confidence_interval.lower.toLocaleString()} (${lowerCostPct.toFixed(2)}%)<br>
+                            Worst case: Rs. ${result.prediction.confidence_interval.upper.toLocaleString()} (${upperCostPct.toFixed(2)}%)
+                        </small>
+                    </div>
+                </div>
+            `;
+
+            // Show result card with recommendation
+            $('#aiPredictionResult').html(`
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-robot"></i> AI Prediction</h5>
+                    <h3 class="mb-2">Rs. ${result.prediction.cost.toLocaleString()}</h3>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>Cost %:</small><br>
+                            <strong class="${costPercentage > STANDARD_COST_PERCENTAGE ? 'text-danger' : 'text-success'}">
+                                ${costPercentage.toFixed(2)}%
+                            </strong>
+                            <small class="text-muted"> (Std: ${STANDARD_COST_PERCENTAGE}%)</small>
+                        </div>
+                        <div class="col-6">
+                            <small>Confidence:</small><br>
+                            <strong>${result.prediction.model_confidence.toFixed(1)}%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                ${recommendationHTML}
+
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-success btn-block" onclick="useAIPrediction()">
+                        <i class="fas fa-check"></i> Use This Prediction
+                    </button>
+                </div>
+            `).slideDown();
+
+            // Success notification
+            if (typeof toastr !== 'undefined') {
+                toastr.success('AI prediction completed!', 'Success');
+            }
+
+        } else {
+            alert('Prediction failed: ' + result.error);
+        }
+    } catch (error) {
+        console.error('AI Prediction Error:', error);
+        alert('Could not connect to AI API. Make sure Flask server is running on port 5000.');
+    } finally {
+        btn.prop('disabled', false).html('<i class="fas fa-brain"></i> Predict Cost with AI');
+    }
+}
+
+function useAIPrediction() {
+    if (!aiPredictionData) return;
+
+    const aiCost = aiPredictionData.cost;
+    const totalSales = parseFloat($('#totalSalesValue').text()) || 0;
+    const costPercentage = (aiCost / totalSales) * 100;
+
+    // Apply to manual cost field
+    $('#total_cost').text(aiCost.toFixed(0));
+
+    // Store in hidden fields for saving
+    $('#ai_predicted_cost').val(aiCost);
+    $('#ai_confidence_hidden').val(aiPredictionData.model_confidence);
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'ai_cost_percentage',
+        value: costPercentage.toFixed(2)
+    }).appendTo('#routeForm');
+
+    // Update cost percentage display
+    $('#cost_percentage').text(costPercentage.toFixed(2));
+
+    // Success notification
+    if (typeof toastr !== 'undefined') {
+        toastr.success('AI prediction applied to route!', 'Applied');
+    } else {
+        alert('AI prediction applied to route cost!');
+    }
+
+    // Hide AI card
+    $('#aiPredictionResult').slideUp();
+}
+
+function mapVehicleTypeForAI(uiType) {
+    const map = {
+        'van': 'Small Lorry',
+        'Van': 'Small Lorry',
+        'small lorry': 'Small Lorry',
+        'Small Lorry': 'Small Lorry',
+        'medium lorry': 'Medium Lorry',
+        'Medium Lorry': 'Medium Lorry',
+        'large lorry': 'Large Lorry',
+        'Large Lorry': 'Large Lorry',
+        'truck': 'Truck',
+        'Truck': 'Truck'
+    };
+    return map[uiType] || 'Small Lorry';
+}
+
+
+function useAIPrediction() {
+    if (!aiPredictionData) return;
+
+    // Apply AI prediction to manual cost fields
+    const aiCost = aiPredictionData.cost;
+
+    // Set total cost
+    $('#total_cost').text(aiCost.toFixed(0));
+
+    // Store in hidden field
+    $('#ai_predicted_cost').val(aiCost);
+    $('#ai_confidence_hidden').val(aiPredictionData.model_confidence);
+
+    // Show success message
+    alert('AI prediction applied to route cost');
+
+
+    // Optionally hide AI card
+    $('#aiPredictionResult').slideUp();
 }
 
 // Form submission validation

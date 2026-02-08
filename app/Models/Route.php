@@ -15,6 +15,9 @@ use App\Models\RouteStop;
 use App\Models\RouteLeg;
 use App\Models\RouteCostItem;
 use App\Models\RouteCompanyAllocation;
+use App\Models\RouteOptimization;
+use App\Models\AIPredictionHistory;
+use App\Services\AIService;
 
 class Route extends Model
 {
@@ -71,6 +74,24 @@ class Route extends Model
         'started_at',
         'completed_at',
         'notes',
+
+        // AI Prediction Fields (NEW)
+        'ai_predicted_cost',
+        'ai_cost_percentage',
+        'ai_confidence',
+        'ai_lower_bound',
+        'ai_upper_bound',
+        'ai_recommendation',
+        'ai_predicted_at',
+        'actual_vs_predicted_difference',
+        'prediction_accuracy_percentage',
+
+        // Route Optimization Fields (NEW)
+        'is_optimized',
+        'optimization_algorithm',
+        'distance_saved_km',
+        'improvement_percentage',
+        'optimization_date',
     ];
 
     /**
@@ -107,6 +128,22 @@ class Route extends Model
         'is_completed' => 'boolean',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+
+        // AI Prediction Casts (NEW)
+        'ai_predicted_cost' => 'decimal:2',
+        'ai_cost_percentage' => 'decimal:2',
+        'ai_confidence' => 'decimal:2',
+        'ai_lower_bound' => 'decimal:2',
+        'ai_upper_bound' => 'decimal:2',
+        'actual_vs_predicted_difference' => 'decimal:2',
+        'prediction_accuracy_percentage' => 'decimal:2',
+        'ai_predicted_at' => 'datetime',
+
+        // Optimization Casts (NEW)
+        'is_optimized' => 'boolean',
+        'distance_saved_km' => 'decimal:2',
+        'improvement_percentage' => 'decimal:2',
+        'optimization_date' => 'datetime',
     ];
 
     /**
@@ -155,6 +192,32 @@ class Route extends Model
     }
 
     /**
+     * AI Prediction Relationships (NEW)
+     */
+    public function aiPredictions()
+    {
+        return $this->hasMany(AIPredictionHistory::class);
+    }
+
+    public function latestAiPrediction()
+    {
+        return $this->hasOne(AIPredictionHistory::class)->latestOfMany();
+    }
+
+    /**
+     * Route Optimization Relationships (NEW)
+     */
+    public function optimizations()
+    {
+        return $this->hasMany(RouteOptimization::class);
+    }
+
+    public function latestOptimization()
+    {
+        return $this->hasOne(RouteOptimization::class)->latestOfMany();
+    }
+
+    /**
      * SCOPES
      */
 
@@ -176,6 +239,19 @@ class Route extends Model
     public function scopeByDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('route_date', [$startDate, $endDate]);
+    }
+
+    /**
+     * AI Prediction Scopes (NEW)
+     */
+    public function scopeWithAiPrediction($query)
+    {
+        return $query->whereNotNull('ai_predicted_cost');
+    }
+
+    public function scopeOptimized($query)
+    {
+        return $query->where('is_optimized', true);
     }
 
     /**
@@ -239,6 +315,11 @@ class Route extends Model
 
         $this->save();
         $this->calculateVariances();
+
+        // Calculate AI prediction accuracy if prediction exists (NEW)
+        if ($this->ai_predicted_cost) {
+            $this->calculatePredictionAccuracy();
+        }
     }
 
     /**
@@ -271,6 +352,34 @@ class Route extends Model
     }
 
     /**
+     * AI PREDICTION ACCURACY CALCULATION (NEW)
+     */
+    public function calculatePredictionAccuracy()
+    {
+        if (!$this->ai_predicted_cost || !$this->actual_total_cost) {
+            return null;
+        }
+
+        $this->actual_vs_predicted_difference = $this->actual_total_cost - $this->ai_predicted_cost;
+
+        $this->prediction_accuracy_percentage =
+            (1 - abs($this->actual_vs_predicted_difference / $this->ai_predicted_cost)) * 100;
+
+        $this->save();
+
+        // Update history table too
+        $latestPrediction = $this->latestAiPrediction;
+        if ($latestPrediction) {
+            $latestPrediction->update([
+                'actual_cost' => $this->actual_total_cost,
+                'accuracy_percentage' => $this->prediction_accuracy_percentage
+            ]);
+        }
+
+        return $this->prediction_accuracy_percentage;
+    }
+
+    /**
      * COMPANY ALLOCATIONS - Step 3: Multi-Company Sales
      */
     public function calculateCompanyAllocations()
@@ -286,7 +395,7 @@ class Route extends Model
             ->get();
 
         $totalSales = $companyStops->sum('total_sales');
-        $totalCost = $this->estimated_total_cost ?? 0;
+        $totalCost = $this->actual_total_cost ?? $this->estimated_total_cost ?? 0;
 
         foreach ($companyStops as $companyData) {
             // Calculate allocation percentage based on sales value
@@ -341,6 +450,58 @@ class Route extends Model
 
         $this->calculateVariances();
         $this->calculateCompanyAllocations();
+
+        // Calculate AI accuracy if prediction exists (NEW)
+        if ($this->ai_predicted_cost) {
+            $this->calculatePredictionAccuracy();
+        }
+    }
+
+    /**
+     * AI COST PREDICTION (NEW)
+     */
+    public function predictCost()
+    {
+        $aiService = app(AIService::class);
+
+        // Get vehicle type safely
+        $vehicleType = optional($this->vehicle)->vehicle_type ?? 'Small Lorry';
+
+        // Get day of week
+        $dayOfWeek = $this->route_date ? $this->route_date->format('l') : 'Monday';
+
+        // Calculate total sales from stops
+        $totalSales = $this->stops()->sum('sales_value');
+
+        $prediction = $aiService->predictCost([
+            'total_distance_km' => $this->estimated_distance_km ?? 0,
+            'total_stops' => $this->stops()->count(),
+            'num_companies' => $this->companyAllocations()->count(),
+            'total_sales_value' => $totalSales,
+            'vehicle_type' => $vehicleType,
+            'day_of_week' => $dayOfWeek
+        ]);
+
+        $this->ai_predicted_cost = $prediction['cost'];
+        $this->ai_cost_percentage = $prediction['cost_percentage'];
+        $this->ai_confidence = $prediction['model_confidence'] ?? null;
+        $this->ai_lower_bound = $prediction['confidence_interval']['lower'] ?? null;
+        $this->ai_upper_bound = $prediction['confidence_interval']['upper'] ?? null;
+        $this->ai_predicted_at = now();
+
+        // Determine recommendation based on cost percentage
+        $standardCost = 0.60; // 0.60% standard
+        if ($this->ai_cost_percentage <= $standardCost) {
+            $this->ai_recommendation = 'GOOD';
+        } elseif ($this->ai_cost_percentage <= $standardCost * 1.5) {
+            $this->ai_recommendation = 'WARNING';
+        } else {
+            $this->ai_recommendation = 'DANGER';
+        }
+
+        $this->save();
+
+        return $prediction;
     }
 
     /**
@@ -412,5 +573,31 @@ class Route extends Model
             'cancelled' => 'Cancelled',
             default => 'Unknown',
         };
+    }
+
+    /**
+     * AI Prediction Accessors (NEW)
+     */
+    public function getHasAiPredictionAttribute()
+    {
+        return !is_null($this->ai_predicted_cost);
+    }
+
+    public function getAiRecommendationBadgeAttribute()
+    {
+        return match($this->ai_recommendation) {
+            'GOOD' => 'success',
+            'WARNING' => 'warning',
+            'DANGER' => 'danger',
+            default => 'secondary',
+        };
+    }
+
+    public function getIsAiAccurateAttribute()
+    {
+        if (!$this->prediction_accuracy_percentage) {
+            return null;
+        }
+        return $this->prediction_accuracy_percentage >= 90;
     }
 }

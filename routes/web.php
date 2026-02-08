@@ -11,6 +11,8 @@ use App\Http\Controllers\RouteController;
 use App\Http\Controllers\RouteReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RouteActualController;
+use App\Http\Controllers\RouteOptimizationController;
+use App\Http\Controllers\AIController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -64,6 +66,49 @@ Route::middleware(['auth'])->group(function () {
      * BEFORE Route::resource('routes', ...) to avoid conflicts
      * with the resource "show" route (GET /routes/{route}).
      */
+    /*
+|--------------------------------------------------------------------------
+| AI Routes
+|--------------------------------------------------------------------------
+|
+| Routes for AI-powered features
+|
+*/
+
+Route::prefix('ai')->middleware(['auth'])->group(function () {
+
+    Route::get('/', [AIController::class, 'index'])
+        ->name('ai.dashboard');
+
+    Route::get('/predict-cost', [AIController::class, 'predictCostForm'])
+        ->name('ai.predict-cost.form');
+
+
+    Route::post('/predict-cost', [AIController::class, 'predictCost'])
+        ->name('ai.predict-cost');
+
+
+    Route::get('/optimize-route', [AIController::class, 'optimizeRouteForm'])
+        ->name('ai.optimize-route.form');
+
+    Route::post('/optimize-route', [AIController::class, 'optimizeRoute'])
+        ->name('ai.optimize-route');
+
+   Route::get('/api-status', [AIController::class, 'apiStatus'])
+        ->name('ai.api-status');
+});
+
+Route::prefix('routes')->name('routes.')->group(function () {
+
+    Route::get('/optimize', [RouteOptimizationController::class, 'index'])
+        ->name('optimize');
+
+    Route::post('/{route}/apply-optimization', [RouteOptimizationController::class, 'applyOptimization'])
+        ->name('apply-optimization');
+
+});
+
+
 
     /**
      * ACTUAL ROUTE COMPLETION (static segment: /routes/actual)
@@ -90,6 +135,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/driver-performance', [RouteReportController::class, 'driverPerformance'])->name('driverPerformance');
         Route::get('/profitability', [RouteReportController::class, 'profitability'])->name('profitability');
         Route::get('/vehicle-usage', [RouteReportController::class, 'vehicleUsage'])->name('vehicleUsage');
+
+
+
+    // Routes CRUD
+    Route::resource('routes', RouteController::class);
+
+    ;
     });
 
     /**

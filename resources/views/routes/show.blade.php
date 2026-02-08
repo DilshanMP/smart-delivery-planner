@@ -108,6 +108,13 @@
                             <i class="fas fa-edit"></i> Edit
                         </a>
                     @endif
+                    <!-- ADD THIS -->
+@if($route->stops->count() >= 3)
+    <a href="{{ route('routes.optimize') }}?route={{ $route->id }}"
+       class="btn btn-danger">
+        <i class="fas fa-robot"></i> AI Optimize
+    </a>
+@endif
                 @endcan
 
                 <a href="{{ route('routes.index') }}" class="btn btn-default">

@@ -131,6 +131,13 @@
                 </p>
             </a>
         </li>
+                <li class="nav-item">
+            <a href="{{ route('routes.optimize') }}" class="nav-link">
+
+                <i class="fas fa-magic nav-icon text-warning"></i>
+                <p>AI Route Optimization</p>
+            </a>
+        </li>
 
         <!-- Complete Routes -->
         <li class="nav-item">
