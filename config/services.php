@@ -35,4 +35,24 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google Maps Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Google Maps API configuration for route distance calculation
+    | Get your API key from: https://console.cloud.google.com/
+    | Required APIs: Distance Matrix API, Directions API, Geocoding API
+    |
+    */
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY', ''),
+    ],
+
+    'ai' => [
+    'url' => env('AI_API_URL', 'http://localhost:5000'),
+    'timeout' => env('AI_API_TIMEOUT', 30),
+],
+
+
 ];

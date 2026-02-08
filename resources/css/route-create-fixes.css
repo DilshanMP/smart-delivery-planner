@@ -1,0 +1,116 @@
+/* Fix for Select2 Dropdown Text Alignment */
+
+/* Ensure select2 text is centered vertically */
+.select2-container--default .select2-selection--single {
+    height: 38px !important;
+    padding: 6px 12px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 24px !important;
+    padding-left: 8px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+
+/* For form-control alignment */
+.form-control, .select2-container {
+    vertical-align: middle;
+}
+
+/* Fix dropdown option text */
+.select2-results__option {
+    padding: 8px 12px !important;
+    text-align: left !important;
+}
+
+/* Ensure proper spacing in rows */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+/* Center align badges and icons */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* AI Prediction Card Styles */
+#aiPredictionResult .alert {
+    border-left: 4px solid;
+    border-radius: 4px;
+}
+
+#aiPredictionResult .alert-success {
+    border-left-color: #28a745;
+}
+
+#aiPredictionResult .alert-warning {
+    border-left-color: #ffc107;
+}
+
+#aiPredictionResult .alert-danger {
+    border-left-color: #dc3545;
+}
+
+/* Cost percentage highlighting */
+.text-danger {
+    font-weight: bold;
+    color: #dc3545 !important;
+}
+
+.text-success {
+    font-weight: bold;
+    color: #28a745 !important;
+}
+
+/* Recommendation box */
+#aiPredictionResult ul {
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+#aiPredictionResult ul li {
+    margin-bottom: 0.5rem;
+}
+
+/* Loading state */
+.btn .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Card enhancements */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Make important values stand out */
+.display-cost {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .select2-container {
+        width: 100% !important;
+    }
+    
+    .company-sales-row .btn-danger {
+        margin-top: 0.5rem;
+    }
+}

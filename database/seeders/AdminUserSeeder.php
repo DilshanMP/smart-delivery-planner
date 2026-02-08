@@ -10,27 +10,43 @@ class AdminUserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Creates the default admin user for the Smart Delivery System.
      */
     public function run(): void
     {
+        $this->command->info('Creating admin user...');
+
+        // Check if admin user already exists
+        $adminEmail = 'admin@smartdelivery.com';
+        $existingAdmin = User::where('email', $adminEmail)->first();
+
+        if ($existingAdmin) {
+            $this->command->warn('⚠️  Admin user already exists!');
+            $this->command->info('Email: ' . $existingAdmin->email);
+            return;
+        }
+
         // Create admin user
         $admin = User::create([
-            'name' => 'System Admin',
-            'email' => 'admin@smartdelivery.com',
+            'name' => 'System Administrator',
+            'email' => $adminEmail,
             'password' => Hash::make('password123'),
+            'company_id' => null, // Admin is not tied to a specific company
+            'phone_number' => '+94771234567',
+            'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
         // Assign admin role
         $admin->assignRole('admin');
 
-        $this->command->info('✓ Admin user created successfully!');
-        $this->command->newLine();
-        $this->command->info('Login Credentials:');
-        $this->command->info('  Email: admin@smartdelivery.com');
-        $this->command->info('  Password: password123');
-        $this->command->newLine();
-        $this->command->warn('⚠ Remember to change the password after first login!');
+        $this->command->info('');
+        $this->command->info('✅ Admin user created successfully!');
+        $this->command->info('');
+        $this->command->info('📧 Email: ' . $admin->email);
+        $this->command->info('🔑 Password: password123');
+        $this->command->info('👤 Name: ' . $admin->name);
+        $this->command->info('🎭 Role: admin');
+        $this->command->info('');
+        $this->command->warn('⚠️  Please change the password after first login!');
     }
 }

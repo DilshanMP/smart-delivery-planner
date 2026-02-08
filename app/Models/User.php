@@ -20,6 +20,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'company_id',      // ← ADD THIS
+        'phone_number',    // ← ADD THIS
+        'is_active',       // ← ADD THIS
     ];
 
     /**
@@ -42,6 +45,15 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',  // ← ADD THIS
         ];
+    }
+
+    /**
+     * Get the company that the user belongs to.
+     */
+    public function company()
+    {
+        return $this->belongsTo(\App\Models\Company::class);
     }
 }
