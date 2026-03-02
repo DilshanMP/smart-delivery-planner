@@ -392,7 +392,7 @@ def optimize_route():
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🚀 AI Route Optimization API")
+    print(" AI Route Optimization API")
     print("=" * 60)
     print("Status: Running")
     print("URL: http://localhost:5000")
